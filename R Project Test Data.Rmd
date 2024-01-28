@@ -1,0 +1,112 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+head(test)
+```
+```{r}
+#test$Age_Group <- cut(test$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+"))
+
+#selected_passengers <- subset(test, HomePlanet == "Europa" & CryoSleep == TRUE & Deck == "B" & Age_Group == "0-10" & Destination == "55 Cancri e")
+
+#print(selected_passengers)
+
+```
+
+
+```{r}
+library(dplyr)
+
+#test$Age_Group <- cut(test$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+"))
+
+#test$Deck <- substr(test$Cabin, 1, 1)
+
+'''selected_passengers <- test %>%
+  filter(
+    (HomePlanet %in% c("Europa", "Mars")) &
+    CryoSleep == TRUE &
+    (Deck %in% c("B", "C")) &
+    Age_Group %in% c("0-10") &
+    Destination == "55 Cancri e"
+  )
+
+
+print(selected_passengers)
+```
+```{r}
+age_0_10_passengers <- subset(test, Age <= 10)
+
+cryosleep_0_50_passengers <- subset(test, CryoSleep == TRUE & Age <= 50)
+
+deck_b_c_0_70_passengers <- subset(test, (Deck == "B" | Deck == "C") & Age <= 70)
+
+selected_passengers <- rbind(age_0_10_passengers, cryosleep_0_50_passengers, deck_b_c_0_70_passengers)
+
+print(selected_passengers)
+```
+```{r}
+age_counts <- table(cut(selected_passengers$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")))
+
+age_counts_df <- as.data.frame(age_counts)
+colnames(age_counts_df) <- c("Age_Group", "Count")
+
+total_passengers <- nrow(selected_passengers)
+age_counts_df$Percentage <- (age_counts_df$Count / total_passengers) * 100
+
+ggplot(age_counts_df, aes(x = Age_Group, y = Percentage, fill = Age_Group)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers in Each Age Range")
+
+```
+```{r}
+selected_passengers_cleaned <- selected_passengers %>%
+  filter(!is.na(CryoSleep))
+
+cryosleep_percentage <- sum(selected_passengers_cleaned$CryoSleep) / nrow(selected_passengers_cleaned) * 100
+
+cryosleep_df <- data.frame(CryoSleep = c("Not in CryoSleep", "In CryoSleep"),
+                           Percentage = c(100 - cryosleep_percentage, cryosleep_percentage))
+
+ggplot(cryosleep_df, aes(x = CryoSleep, y = Percentage, fill = CryoSleep)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers in CryoSleep")
+```
+```{r}
+selected_passengers_cleaned <- selected_passengers %>%
+  filter(!is.na(Deck))
+
+deck_counts <- table(selected_passengers_cleaned$Deck)
+
+deck_counts_df <- as.data.frame(deck_counts)
+
+colnames(deck_counts_df) <- c("Deck", "Count")
+
+total_passengers_on_deck <- nrow(selected_passengers_cleaned)
+
+deck_counts_df$Percentage <- (deck_counts_df$Count / total_passengers_on_deck) * 100
+
+ggplot(deck_counts_df, aes(x = Deck, y = Percentage, fill = Deck)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers on Each Deck")
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

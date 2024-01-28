@@ -1,0 +1,327 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+```
+
+
+```{r}
+head(train)
+```
+```{r}
+home_planet_transported <- table(train$HomePlanet, train$Transported)
+home_planet_transported_percentage <- prop.table(home_planet_transported, margin =1)
+
+library(ggplot2)
+
+home_planet_result <- as.data.frame.matrix(home_planet_transported_percentage)
+
+home_planet_result$HomePlanet <- rownames(home_planet_result)
+
+home_planet_result_plot <- tidyr::gather(home_planet_result, key = "Transported", value = "Percentage", -HomePlanet)
+
+ggplot(home_planet_result_plot, aes(x = HomePlanet, y = Percentage, fill = Transported)) +
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage * 100)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers Transported from Each Home Planet")
+```
+```{r}
+cryosleep_percentage <- mean(train$Transported[train$CryoSleep == TRUE], na.rm = TRUE) * 100
+
+pie_data <- data.frame(
+  CryoSleep = c("FALSE", "TRUE"),
+  Percentage = c(100 - cryosleep_percentage, cryosleep_percentage)
+)
+
+ggplot(pie_data, aes(x = "", y = Percentage, fill = CryoSleep)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  coord_polar(theta = "y") +
+  labs(title = "Percentage of Passengers Transported in Cryo Sleep") +
+  theme_void()
+```
+```{r}
+cryosleep_passengers <- subset(train, CryoSleep == TRUE)
+
+cryosleep_passengers$Age_Group <-  cut(cryosleep_passengers$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+"))
+
+age_counts <- table(cryosleep_passengers$Age_Group)
+
+print(age_counts)
+```
+
+
+```{r}
+cryosleep_transported_passengers <- subset(train, CryoSleep == TRUE & Transported == TRUE)
+
+age_counts <- table(cryosleep_transported_passengers$Age_Group)
+
+print(age_counts)
+
+```
+
+
+```{r}
+cryosleep_transported_passengers <- subset(train, CryoSleep == TRUE & Transported == TRUE)
+
+cryosleep_transported_passengers$Age_Group <- cut(cryosleep_transported_passengers$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+"))
+
+age_counts <- table(cryosleep_transported_passengers$Age_Group)
+
+age_counts_df <- as.data.frame(age_counts)
+colnames(age_counts_df) <- c("Age_Group", "Count")
+
+age_counts_df$Percentage <- (age_counts_df$Count / sum(age_counts_df$Count)) * 100
+
+ggplot(age_counts_df, aes(x = Age_Group, y = Percentage, label = sprintf("%.1f%%", Percentage))) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(position = position_stack(vjust = 0.5), size = 3) +
+  labs(title = "Percentages of Transported Passengers in Cryosleep by Age Group") +
+  xlab("Age Group") +
+  ylab("Percentage")
+```
+
+
+```{r}
+train$Deck <- substr(train$Cabin, 1, 1)
+
+cabin_transported <- table(train$Deck, train$Transported)
+
+cabin_transported_df <- as.data.frame.matrix(cabin_transported)
+
+colnames(cabin_transported_df) <- c("NotTransported", "Transported")
+
+cabin_transported_df$Percentage <- cabin_transported_df$Transported / rowSums(cabin_transported_df) * 100
+
+print(cabin_transported_df)
+
+ggplot(cabin_transported_df, aes(x = rownames(cabin_transported_df), y = Percentage, fill = rownames(cabin_transported_df))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers Transported by Cabin Deck",
+       x = "Deck",
+       y = "Percentage") +
+  theme_minimal()
+```
+
+
+```{r}
+age_deck_b_passengers <- subset(train, Deck == "B")
+
+age_deck_b_counts <- table(cut(age_deck_b_passengers$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")))
+
+age_deck_b_counts_df <- as.data.frame(age_deck_b_counts)
+colnames(age_deck_b_counts_df) <- c("Age_Group", "Count")
+
+total_deck_b_passengers <- nrow(age_deck_b_passengers)
+age_deck_b_counts_df$Percentage <- (age_deck_b_counts_df$Count / total_deck_b_passengers) * 100
+
+print(age_deck_b_counts_df)
+
+
+```
+
+
+```{r}
+age_deck_c_passengers <- subset(train, Deck == "C")
+
+age_deck_c_counts <- table(cut(age_deck_c_passengers$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")))
+
+age_deck_c_counts_df <- as.data.frame(age_deck_c_counts)
+colnames(age_deck_c_counts_df) <- c("Age_Group", "Count")
+
+total_deck_c_passengers <- nrow(age_deck_c_passengers)
+age_deck_c_counts_df$Percentage <- (age_deck_c_counts_df$Count / total_deck_c_passengers) * 100
+
+print(age_deck_c_counts_df)
+```
+
+
+```{r}
+cryosleep_deck_b_c_passengers <- subset(train, (Deck == "B" | Deck == "C") & CryoSleep == TRUE)
+
+count_cryosleep_deck_b_c_passengers <- nrow(cryosleep_deck_b_c_passengers)
+
+cat("Number of passengers on decks B and C in CryoSleep:", count_cryosleep_deck_b_c_passengers, "\n")
+
+```
+
+
+```{r}
+total_cryosleep_passengers <- subset(train, CryoSleep == TRUE)
+total_cryosleep_passengers_count <- nrow(total_cryosleep_passengers)
+
+cryosleep_deck_b_c_passengers <- subset(train, (Deck == "B" | Deck == "C") & CryoSleep == TRUE)
+cryosleep_deck_b_c_passengers_count <- nrow(cryosleep_deck_b_c_passengers)
+
+percentage_cryosleep_deck_b_c <- (cryosleep_deck_b_c_passengers_count / total_cryosleep_passengers_count) * 100
+
+cat("Total percentage of CryoSleep passengers on decks B and C:", percentage_cryosleep_deck_b_c, "%\n")
+
+```
+
+
+```{r}
+train$Side <- substr(train$Cabin, nchar(train$Cabin), nchar(train$Cabin))
+
+side_transported <- table(train$Side, train$Transported)
+
+side_transported_df <- as.data.frame.matrix(side_transported)
+
+colnames(side_transported_df) <- c("NotTransported", "Transported")
+
+side_transported_df$Percentage <- side_transported_df$Transported / rowSums(side_transported_df) * 100
+
+print(side_transported_df)
+
+ggplot(side_transported_df, aes(x = rownames(side_transported_df), y = Percentage, fill = rownames(side_transported_df))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers Transported by Side of the Ship",
+       x = "Side",
+       y = "Percentage") +
+  theme_minimal()
+
+
+```
+
+
+```{r}
+train$Age_Group <- cut(train$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+"))
+
+age_transported <- table(train$Age_Group, train$Transported)
+
+age_transported_df <- as.data.frame.matrix(age_transported)
+
+colnames(age_transported_df) <- c("NotTransported", "Transported")
+
+age_transported_df$Percentage <- age_transported_df$Transported / rowSums(age_transported_df) * 100
+
+print(age_transported_df)
+
+library(ggplot2)
+ggplot(age_transported_df, aes(x = rownames(age_transported_df), y = Percentage, fill = rownames(age_transported_df))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers Transported by Age Group",
+       x = "Age Group",
+       y = "Percentage") +
+  theme_minimal()
+```
+
+
+```{r}
+total_passengers_age <- table(cut(train$Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")))
+
+total_passengers_age_df <- as.data.frame(total_passengers_age)
+
+colnames(total_passengers_age_df) <- c("Age_Group", "Count")
+
+print(total_passengers_age_df)
+
+
+```
+
+
+```{r}
+age_0_10_passengers <- subset(train, cut(Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")) == "0-10")
+
+total_age_0_10_passengers <- nrow(age_0_10_passengers)
+transported_age_0_10_passengers <- sum(age_0_10_passengers$Transported == TRUE)
+
+percentage_transported_age_0_10 <- (transported_age_0_10_passengers / total_age_0_10_passengers) * 100
+
+cat("Percentage of Age Group 0-10 passengers transported:", percentage_transported_age_0_10, "%\n")
+
+```
+
+
+```{r}
+age_11_20_passengers <- subset(train, cut(Age, breaks = c(-Inf, 10, 20, 30, 40, 50, 60, 70, Inf), labels = c("0-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")) == "11-20")
+
+total_age_11_20_passengers <- nrow(age_11_20_passengers)
+transported_age_11_20_passengers <- sum(age_11_20_passengers$Transported == TRUE)
+
+percentage_transported_age_11_20 <- (transported_age_11_20_passengers / total_age_11_20_passengers) * 100
+
+cat("Percentage of Age Group 11-20 passengers transported:", percentage_transported_age_11_20, "%\n")
+```
+
+
+```{r}
+vip_transported <- table(train$VIP, train$Transported)
+
+vip_transported_df <- as.data.frame.matrix(vip_transported)
+
+colnames(vip_transported_df) <- c("NotTransported", "Transported")
+
+vip_transported_df$Percentage <- vip_transported_df$Transported / rowSums(vip_transported_df) * 100
+
+print(vip_transported_df)
+
+library(ggplot2)
+ggplot(vip_transported_df, aes(x = rownames(vip_transported_df), y = Percentage, fill = rownames(vip_transported_df))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of VIP Passengers Transported",
+       x = "VIP",
+       y = "Percentage") +
+  theme_minimal()
+```
+
+
+```{r}
+destination_transported <- table(train$Destination, train$Transported)
+
+destination_transported_df <- as.data.frame.matrix(destination_transported)
+
+colnames(destination_transported_df) <- c("NotTransported", "Transported")
+
+destination_transported_df$Percentage <- destination_transported_df$Transported / rowSums(destination_transported_df) * 100
+
+print(destination_transported_df)
+
+library(ggplot2)
+ggplot(destination_transported_df, aes(x = rownames(destination_transported_df), y = Percentage, fill = rownames(destination_transported_df))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.1f%%", Percentage)),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  labs(title = "Percentage of Passengers Transported by Destination",
+       x = "Destination",
+       y = "Percentage") +
+  theme_minimal()
+```
+
+
+```{r}
+total_passengers <- nrow(train)
+transported_passengers <- sum(train$Transported == TRUE)
+
+percentage_transported <- (transported_passengers / total_passengers) * 100
+
+cat("Total percentage of passengers transported:", percentage_transported, "%\n")
+
+```
+
+
+```{r}
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed
